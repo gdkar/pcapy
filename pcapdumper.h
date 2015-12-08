@@ -14,6 +14,6 @@
 PyObject*
 new_pcapdumper(pcap_dumper_t *dumper);
 
-extern PyTypeObject Pdumpertype;
+extern PyTypeObject PcapDumper_Type;
 
 #endif // __pcapdumper__

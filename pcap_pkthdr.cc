@@ -32,11 +32,9 @@ typedef struct {
 // Pkthdr_Type
 
 static void
-pcap_dealloc(register pkthdr* pp)
-{
+pcap_dealloc(register pkthdr* pp) {
   PyObject_Del(pp);
 }
-
 
 // pcap methods
 static PyObject* p_getts(register pkthdr* pp, PyObject* args);
@@ -52,16 +50,15 @@ static PyMethodDef p_methods[] = {
 };
 
 static PyObject*
-pcap_getattr(pkthdr* pp, char* name)
-{
+pcap_getattr(pkthdr* pp, char* name) {
   return Py_FindMethod(p_methods, (PyObject*)pp, name);
 }
 
 
-PyTypeObject Pkthdr_type = {
+PyTypeObject PktHdr_Type = {
   PyObject_HEAD_INIT(NULL)
   0,
-  "Pkthdr",
+  "PktHdr",
   sizeof(pkthdr),
   0,
 
@@ -75,6 +72,21 @@ PyTypeObject Pkthdr_type = {
   0,			  /*tp_as_number*/
   0,			  /*tp_as_sequence*/
   0,			  /*tp_as_mapping*/
+  0,              /*tp_hash*/
+  0,              /*tp_call*/
+  0,              /*tp_str*/
+  0,              /*tp_getattro*/
+  0,              /*tp_setattro*/
+  0,              /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_ITER, /* tp_flags */
+  "pcap packet header", /* tp_doc */
+  0,                /* tp_traverse */
+  0,                /* tp_clear */
+  0,                /* tp_richcompare */
+  0,                /* tp_weaklistoffset */
+  0,                /* tp_iter: __iter__() */
+  0                 /* tp_iternext: next() method */
+
 };
 
 
@@ -83,7 +95,7 @@ new_pcap_pkthdr(const struct pcap_pkthdr* hdr)
 {
   pkthdr *pp;
 
-  pp = PyObject_New(pkthdr, &Pkthdr_type);
+  pp = PyObject_New(pkthdr, &PktHdr_Type);
   if (pp == NULL)
     return NULL;
 
@@ -97,7 +109,7 @@ new_pcap_pkthdr(const struct pcap_pkthdr* hdr)
 static PyObject*
 p_getts(register pkthdr* pp, PyObject* args)
 {
-  if (pp->ob_type != &Pkthdr_type) {
+  if (pp->ob_type != &PktHdr_Type) {
 	  PyErr_SetString(PcapError, "Not a pkthdr object");
 	  return NULL;
   }
@@ -108,7 +120,7 @@ p_getts(register pkthdr* pp, PyObject* args)
 static PyObject*
 p_getcaplen(register pkthdr* pp, PyObject* args)
 {
-  if (pp->ob_type != &Pkthdr_type) {
+  if (pp->ob_type != &PktHdr_Type) {
 	  PyErr_SetString(PcapError, "Not a pkthdr object");
 	  return NULL;
   }
@@ -119,7 +131,7 @@ p_getcaplen(register pkthdr* pp, PyObject* args)
 static PyObject*
 p_getlen(register pkthdr* pp, PyObject* args)
 {
-  if (pp->ob_type != &Pkthdr_type) {
+  if (pp->ob_type != &PktHdr_Type) {
 	  PyErr_SetString(PcapError, "Not a pkthdr object");
 	  return NULL;
   }
@@ -130,7 +142,7 @@ p_getlen(register pkthdr* pp, PyObject* args)
 int
 pkthdr_to_native(PyObject *pyhdr, struct pcap_pkthdr *hdr)
 {
-  if (pyhdr->ob_type != &Pkthdr_type) {
+  if (pyhdr->ob_type != &PktHdr_Type) {
 	  PyErr_SetString(PcapError, "Not a pkthdr object");
 	  return -1;
   }

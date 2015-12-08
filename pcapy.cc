@@ -191,9 +191,9 @@ initpcapy(void)
 {
   PyObject *m, *d;
 
-  Pcaptype.ob_type =  &PyType_Type;
-  Pkthdr_type.ob_type = &PyType_Type;
-  Pdumpertype.ob_type = &PyType_Type;
+  PcapObject_Type.ob_type =  &PyType_Type;
+  PktHdr_Type.ob_type = &PyType_Type;
+  PcapDumper_Type.ob_type = &PyType_Type;
 
   m = Py_InitModule3("pcapy", pcap_methods, pcap_doc);
 

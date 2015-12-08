@@ -49,7 +49,7 @@ bpfprog_getattr(bpfobject* pp, char* name)
 }
 
 
-PyTypeObject BPFProgramtype = {
+PyTypeObject BPFProgram_Type = {
   PyObject_HEAD_INIT(NULL)
   0,
   "Bpf",
@@ -73,7 +73,7 @@ PyObject*
 new_bpfobject(const struct bpf_program &bpfprog)
 {
   bpfobject *bpf;
-  bpf = PyObject_New(bpfobject, &BPFProgramtype);
+  bpf = PyObject_New(bpfobject, &BPFProgram_Type);
   if (bpf == NULL)
     return NULL;
   
@@ -89,7 +89,7 @@ p_filter(register bpfobject* bpf, PyObject* args)
   u_char* packet;
   unsigned int len;
 
-  if (bpf->ob_type != &BPFProgramtype)
+  if (bpf->ob_type != &BPFProgram_Type)
     {
       PyErr_SetString(PcapError, "Not a bpfprogram object");
 	return NULL;

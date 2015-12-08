@@ -33,14 +33,19 @@ typedef struct {
 
 // PcapType
 
+
+static PyObject*
+p_next(register pcapobject* pp, PyObject*);
+static PyObject*
+p_iter(PyObject*);
+static PyObject*
+p_iternext(PyObject*);
 static void
 pcap_dealloc(register pcapobject* pp)
 {
   if ( pp->pcap )
     pcap_close(pp->pcap);
-
   pp->pcap = NULL;
-
   PyObject_Del(pp);
 }
 
@@ -80,10 +85,10 @@ pcap_getattr(pcapobject* pp, char* name)
 }
 
 
-PyTypeObject Pcaptype = {
+PyTypeObject PcapObject_Type = {
   PyObject_HEAD_INIT(NULL)
   0,
-  "Reader",
+  "PcapObject",
   sizeof(pcapobject),
   0,
 
@@ -97,6 +102,20 @@ PyTypeObject Pcaptype = {
   0,			  /*tp_as_number*/
   0,			  /*tp_as_sequence*/
   0,			  /*tp_as_mapping*/
+  0,              /*tp_hash*/
+  0,              /*tp_call*/
+  0,              /*tp_str*/
+  0,              /*tp_getattro*/
+  0,              /*tp_setattro*/
+  0,              /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT,   /* tp_flags */
+  "pcap object",        /* tp_doc */
+  0,              /* tp_traverse */
+  0,              /* tp_clear */
+  0,              /* tp_richcompare */
+  0,              /* tp_weaklistoffset */
+  p_iter,         /* tp_iter: __iter__() */
+  p_iternext      /* tp_iternext: next() method */
 };
 
 
@@ -105,7 +124,7 @@ new_pcapobject(pcap_t *pcap, bpf_u_int32 net, bpf_u_int32 mask)
 {
   pcapobject *pp;
 
-  pp = PyObject_New(pcapobject, &Pcaptype);
+  pp = PyObject_New(pcapobject, &PcapObject_Type);
   if (pp == NULL)
     return NULL;
 
@@ -129,7 +148,7 @@ static void ntos(char* dst, unsigned int n, int ip)
 static PyObject*
 p_getnet(register pcapobject* pp, PyObject* args)
 {
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;
@@ -143,7 +162,7 @@ p_getnet(register pcapobject* pp, PyObject* args)
 static PyObject*
 p_getmask(register pcapobject* pp, PyObject* args)
 {
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;
@@ -161,7 +180,7 @@ p_setfilter(register pcapobject* pp, PyObject* args)
   int status;
   char* str;
 
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
 	return NULL;
@@ -187,41 +206,59 @@ p_setfilter(register pcapobject* pp, PyObject* args)
   Py_INCREF(Py_None);
   return Py_None;
 }
-
+static PyObject*
+p_iternext(PyObject *selfobj)
+{
+    if (selfobj->ob_type != &PcapObject_Type) {
+      PyErr_SetString(PcapError, "Not a pcap object");
+      return NULL;
+    }
+    pcapobject* self = (pcapobject*)selfobj;
+    PyObject *ret = p_next(self,NULL);
+    if(!ret) {
+        PyErr_SetNone(PyExc_StopIteration);
+    }
+    return ret;
+}
+static PyObject*
+p_iter(PyObject* self)
+{
+    if (self->ob_type != &PcapObject_Type) {
+      PyErr_SetString(PcapError, "Not a pcap object");
+      return NULL;
+    }
+    Py_INCREF(self);
+    return self;
+}
 static PyObject*
 p_next(register pcapobject* pp, PyObject*)
 {
-  struct pcap_pkthdr hdr;
-  const unsigned char *buf;
+    struct pcap_pkthdr hdr;
+    const unsigned char *buf;
 
-  if (pp->ob_type != &Pcaptype)
-    {
+    if (pp->ob_type != &PcapObject_Type) {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;
     }
 
-  // allow threads as this might block
-  Py_BEGIN_ALLOW_THREADS;
-  buf = pcap_next(pp->pcap, &hdr);
-  Py_END_ALLOW_THREADS;
+    // allow threads as this might block
+    Py_BEGIN_ALLOW_THREADS;
+    buf = pcap_next(pp->pcap, &hdr);
+    Py_END_ALLOW_THREADS;
 
-  if(!buf)
-    {
+    if(!buf) {
       PyErr_SetString(PcapError, pcap_geterr(pp->pcap));
       return NULL;
     }
-
-  PyObject *pkthdr = new_pcap_pkthdr(&hdr);
-    if (pkthdr)
-    {
+    PyObject *pkthdr = new_pcap_pkthdr(&hdr);
+    if (pkthdr) {
         PyObject *ret = NULL;
         ret = Py_BuildValue("(Os#)", pkthdr, buf, hdr.caplen);
         Py_DECREF(pkthdr);
         return ret;
     }
-
-  PyErr_SetString(PcapError, "Can't build pkthdr");
-  return NULL;
+    PyErr_SetString(PcapError, "Can't build pkthdr");
+    return NULL;
 }
 
 struct PcapCallbackContext {
@@ -278,7 +315,7 @@ p_dispatch(register pcapobject* pp, PyObject* args)
   int cant, ret;
   PyObject *PyFunc;
 
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;
@@ -308,7 +345,7 @@ p_dump_open(register pcapobject* pp, PyObject* args)
   char *filename;
   pcap_dumper_t *ret;
 
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;
@@ -334,7 +371,7 @@ p_loop(register pcapobject* pp, PyObject* args)
   int cant, ret;
   PyObject *PyFunc;
 
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;
@@ -363,7 +400,7 @@ p_loop(register pcapobject* pp, PyObject* args)
 static PyObject*
 p_datalink(register pcapobject* pp, PyObject* args)
 {
-	if (pp->ob_type != &Pcaptype) {
+	if (pp->ob_type != &PcapObject_Type) {
 		PyErr_SetString(PcapError, "Not a pcap object");
 		return NULL;
 	}
@@ -376,7 +413,7 @@ p_datalink(register pcapobject* pp, PyObject* args)
 static PyObject*
 p_setnonblock(register pcapobject* pp, PyObject* args)
 {
-	if (pp->ob_type != &Pcaptype) {
+	if (pp->ob_type != &PcapObject_Type) {
 		PyErr_SetString(PcapError, "Not a pcap object");
 		return NULL;
 	}
@@ -400,7 +437,7 @@ p_setnonblock(register pcapobject* pp, PyObject* args)
 static PyObject*
 p_getnonblock(register pcapobject* pp, PyObject* args)
 {
-	if (pp->ob_type != &Pcaptype) {
+	if (pp->ob_type != &PcapObject_Type) {
 		PyErr_SetString(PcapError, "Not a pcap object");
 		return NULL;
 	}
@@ -422,7 +459,7 @@ p_sendpacket(register pcapobject* pp, PyObject* args)
   unsigned char* str;
   unsigned int length;
 
-  if (pp->ob_type != &Pcaptype)
+  if (pp->ob_type != &PcapObject_Type)
     {
       PyErr_SetString(PcapError, "Not a pcap object");
       return NULL;

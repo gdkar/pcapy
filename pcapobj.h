@@ -14,6 +14,6 @@
 PyObject*
 new_pcapobject(pcap_t *pcap, bpf_u_int32 net=0, bpf_u_int32 mask=0);
 
-extern PyTypeObject Pcaptype;
+extern PyTypeObject PcapObject_Type;
 
 #endif // __pcapobj__

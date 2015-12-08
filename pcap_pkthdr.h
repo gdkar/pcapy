@@ -17,6 +17,6 @@ new_pcap_pkthdr(const struct pcap_pkthdr* hdr);
 int
 pkthdr_to_native(PyObject *pyhdr, struct pcap_pkthdr *hdr);
 
-extern PyTypeObject Pkthdr_type;
+extern PyTypeObject PktHdr_Type;
 
 #endif // __pcap_pkthdr__

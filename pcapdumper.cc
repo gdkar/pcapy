@@ -21,7 +21,7 @@ typedef struct {
 } pcapdumper;
 
 
-// Pdumpertype
+// PcapDumper_Type
 
 static void
 pcap_dealloc(register pcapdumper* pp)
@@ -53,10 +53,10 @@ pcap_getattr(pcapdumper* pp, char* name)
 }
 
 
-PyTypeObject Pdumpertype = {
+PyTypeObject PcapDumper_Type = {
   PyObject_HEAD_INIT(NULL)
   0,
-  "Dumper",
+  "PcapDumper",
   sizeof(pcapdumper),
   0,
 
@@ -78,7 +78,7 @@ new_pcapdumper(pcap_dumper_t *dumper)
 {
   pcapdumper *pp;
 
-  pp = PyObject_New(pcapdumper, &Pdumpertype);
+  pp = PyObject_New(pcapdumper, &PcapDumper_Type);
   if (pp == NULL)
     return NULL;
 
@@ -94,7 +94,7 @@ p_dump(register pcapdumper* pp, PyObject* args)
 	u_char *data;
 	int       len;
 
-	if (pp->ob_type != &Pdumpertype) {
+	if (pp->ob_type != &PcapDumper_Type) {
 		PyErr_SetString(PcapError, "Not a pcapdumper object");
 		return NULL;
 	}
