@@ -33,18 +33,6 @@ if sys.platform == 'win32':
     sources.append(os.path.join('win32', 'dllmain.cc'))
     macros.append(('WIN32', '1'))
 
-# HACK replace linker gcc with g++
-from distutils import sysconfig
-save_init_posix = sysconfig._init_posix
-def my_init_posix():
-	save_init_posix()
-	g = sysconfig._config_vars
-	if g['LDSHARED'][:3]=='gcc':
-		print 'my_init_posix: changing LDSHARED =',`g['LDSHARED']`,
-		g['LDSHARED'] = 'gcc'+g['LDSHARED'][3:]
-		print 'to',`g['LDSHARED']`
-sysconfig._init_posix = my_init_posix
-
 setup(name = PACKAGE_NAME,
       version = "0.10.9",
       url = "https://github.com/CoreSecurity/pcapy",
@@ -54,13 +42,15 @@ setup(name = PACKAGE_NAME,
       maintainer_email = "oss@coresecurity.com",
       description = "Python pcap extension",
       license = "Apache modified",
+      zip_safe=False,
       ext_modules = [Extension(
           name = PACKAGE_NAME,
           sources = sources,
           define_macros = macros,
           include_dirs = include_dirs,
           library_dirs = library_dirs,
-          libraries = libraries)],
+          libraries = libraries,
+          extra_compile_args=["-std=gnu11"])],
       scripts = ['tests/pcapytests.py', 'tests/96pings.pcap'],
       data_files = [(os.path.join('share', 'doc', PACKAGE_NAME),
                      ['README', 'LICENSE', 'pcapy.html'])],
