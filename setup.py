@@ -22,11 +22,11 @@ else:
 
 # end of user configurable parameters
 macros = []
-sources = ['pcapdumper.cc',
-           'bpfobj.cc',
-           'pcapy.cc',
-           'pcapobj.cc',
-           'pcap_pkthdr.cc',
+sources = ['pcapdumper.c',
+           'bpfobj.c',
+           'pcapy.c',
+           'pcapobj.c',
+           'pcap_pkthdr.c',
            ]
 
 if sys.platform == 'win32':
@@ -41,7 +41,7 @@ def my_init_posix():
 	g = sysconfig._config_vars
 	if g['LDSHARED'][:3]=='gcc':
 		print 'my_init_posix: changing LDSHARED =',`g['LDSHARED']`,
-		g['LDSHARED'] = 'g++'+g['LDSHARED'][3:]
+		g['LDSHARED'] = 'gcc'+g['LDSHARED'][3:]
 		print 'to',`g['LDSHARED']`
 sysconfig._init_posix = my_init_posix
 

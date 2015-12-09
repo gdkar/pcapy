@@ -9,14 +9,16 @@
 
 #ifndef __PCAPY_H__
 
-
+#ifdef __cplusplus
 extern "C" {
+#endif
 #ifdef WIN32
 __declspec(dllexport)
 #endif
 void initpcapy(void);
+#ifdef __cplusplus
 }
-
+#endif
 // exception object
 extern PyObject* PcapError;
 
